@@ -1,0 +1,51 @@
+Simplified Frustum Net
+
+
+Original Paper
+---
+http://stanford.edu/~rqi/frustum-pointnets/
+
+Original Implementation (in Tensorflow)
+---
+https://github.com/charlesq34/frustum-pointnets
+
+
+Reference Pytorch Implement
+---
+https://github.com/simon3dv/frustum_pointnets_pytorch
+
+
+Run with Nvidia-docker
+---
+1. Install Nvidia driver, docker and wsl2. Change the default docker runtime
+2. Build the docker image. Within wsl2 under the project dir:
+    docker build -t pytorch_base .
+   It will build a container named "pytorch_base"
+3. Add python interpreter in PyCharm and use it.
+
+
+After that, clicking the green triangle next to the script will run the function within the docker
+environment. The output will be redirected to PyCharm's window.
+
+
+main.py
+----
+Use for cuda test
+
+
+frustum_pointnet.py
+---
+Its main can be used for a neural network. Dry run with dummy input
+
+
+data_provider.py
+---
+Its main can be used for read the pickle file exported from data_toolbox
+
+
+train.py
+---
+Not test yet. See pytorch's documentation for more info
+Original train.py (really ugly)
+https://github.com/simon3dv/frustum_pointnets_pytorch/blob/master/train/train.py
+
