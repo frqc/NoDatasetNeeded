@@ -52,7 +52,7 @@ class hourglass(nn.Module):
 class PSMNet(nn.Module):
     def __init__(self, maxdisp):
         super(PSMNet, self).__init__()
-        self.maxdisp = maxdisp
+        self.maxdisp = int(maxdisp)
 
         self.feature_extraction = feature_extraction()
 
