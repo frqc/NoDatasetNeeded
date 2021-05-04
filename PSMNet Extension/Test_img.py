@@ -22,10 +22,10 @@ parser.add_argument('--datapath', default='/media/jiaren/ImageNet/data_scene_flo
                     help='select model')
 parser.add_argument('--loadmodel', default='./trained/pretrained_model_KITTI2015.tar',
                     help='loading model')
-parser.add_argument('--leftimg', default= './VO04_L.png',
+parser.add_argument('--leftimg', default='./VO04_L.png',
                     help='load model')
-parser.add_argument('--rightimg', default= './VO04_R.png',
-                    help='load model')                                      
+parser.add_argument('--rightimg', default='./VO04_R.png',
+                    help='load model')
 parser.add_argument('--model', default='stackhourglass',
                     help='select model')
 parser.add_argument('--maxdisp', type=int, default=192,
@@ -56,77 +56,72 @@ if args.loadmodel is not None:
     state_dict = torch.load(args.loadmodel)
     model.load_state_dict(state_dict['state_dict'])
 
-print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+print('Number of model parameters: {}'.format(
+    sum([p.data.nelement() for p in model.parameters()])))
 
-def test(imgL,imgR):
-        model.eval()
 
-        if args.cuda:
-           imgL = imgL.cuda()
-           imgR = imgR.cuda()     
+def test(imgL, imgR):
+    model.eval()
 
-        with torch.no_grad():
-            disp = model(imgL,imgR)
+    if args.cuda:
+        imgL = imgL.cuda()
+        imgR = imgR.cuda()
 
-        disp = torch.squeeze(disp)
-        pred_disp = disp.data.cpu().numpy()
+    with torch.no_grad():
+        disp = model(imgL, imgR)
 
-        return pred_disp
+    disp = torch.squeeze(disp)
+    pred_disp = disp.data.cpu().numpy()
+
+    return pred_disp
 
 
 def main():
 
-        normal_mean_var = {'mean': [0.485, 0.456, 0.406],
-                            'std': [0.229, 0.224, 0.225]}
-        infer_transform = transforms.Compose([transforms.ToTensor(),
-                                              transforms.Normalize(**normal_mean_var)])    
+    normal_mean_var = {'mean': [0.485, 0.456, 0.406],
+                       'std': [0.229, 0.224, 0.225]}
+    infer_transform = transforms.Compose([transforms.ToTensor(),
+                                          transforms.Normalize(**normal_mean_var)])
 
-        imgL_o = Image.open(args.leftimg).convert('RGB')
-        imgR_o = Image.open(args.rightimg).convert('RGB')
+    imgL_o = Image.open(args.leftimg).convert('RGB')
+    imgR_o = Image.open(args.rightimg).convert('RGB')
 
-        imgL = infer_transform(imgL_o)
-        imgR = infer_transform(imgR_o) 
-       
+    imgL = infer_transform(imgL_o)
+    imgR = infer_transform(imgR_o)
 
-        # pad to width and hight to 16 times
-        if imgL.shape[1] % 16 != 0:
-            times = imgL.shape[1]//16       
-            top_pad = (times+1)*16 -imgL.shape[1]
-        else:
-            top_pad = 0
+    # pad to width and hight to 16 times
+    if imgL.shape[1] % 16 != 0:
+        times = imgL.shape[1]//16
+        top_pad = (times+1)*16 - imgL.shape[1]
+    else:
+        top_pad = 0
 
-        if imgL.shape[2] % 16 != 0:
-            times = imgL.shape[2]//16                       
-            right_pad = (times+1)*16-imgL.shape[2]
-        else:
-            right_pad = 0    
+    if imgL.shape[2] % 16 != 0:
+        times = imgL.shape[2]//16
+        right_pad = (times+1)*16-imgL.shape[2]
+    else:
+        right_pad = 0
 
-        imgL = F.pad(imgL,(0,right_pad, top_pad,0)).unsqueeze(0)
-        imgR = F.pad(imgR,(0,right_pad, top_pad,0)).unsqueeze(0)
+    imgL = F.pad(imgL, (0, right_pad, top_pad, 0)).unsqueeze(0)
+    imgR = F.pad(imgR, (0, right_pad, top_pad, 0)).unsqueeze(0)
 
-        start_time = time.time()
-        pred_disp = test(imgL,imgR)
-        print('time = %.2f' %(time.time() - start_time))
+    start_time = time.time()
+    pred_disp = test(imgL, imgR)
+    print('time = %.2f' % (time.time() - start_time))
 
-        
-        if top_pad !=0 and right_pad != 0:
-            img = pred_disp[top_pad:,:-right_pad]
-        elif top_pad ==0 and right_pad != 0:
-            img = pred_disp[:,:-right_pad]
-        elif top_pad !=0 and right_pad == 0:
-            img = pred_disp[top_pad:,:]
-        else:
-            img = pred_disp
-        
-        img = (img*256).astype('uint16')
-        img = Image.fromarray(img)
-        img.save('Test_disparity.png')
+    if top_pad != 0 and right_pad != 0:
+        img = pred_disp[top_pad:, :-right_pad]
+    elif top_pad == 0 and right_pad != 0:
+        img = pred_disp[:, :-right_pad]
+    elif top_pad != 0 and right_pad == 0:
+        img = pred_disp[top_pad:, :]
+    else:
+        img = pred_disp
+
+    img = (img*256).astype('uint16')
+    img = Image.fromarray(img)
+    img.save('Test_disparity.png')
+
 
 if __name__ == '__main__':
-   main()
-
-
-
-
-
-
+    main()
