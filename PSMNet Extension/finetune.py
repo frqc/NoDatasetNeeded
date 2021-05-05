@@ -17,6 +17,7 @@ import numpy as np
 import time
 import math
 import copy
+from tqdm import tqdm
 from dataloader import KITTIloader2015 as ls
 from dataloader import KITTILoader as DA
 
@@ -71,12 +72,14 @@ else:
     print('no model')
 
 if args.cuda:
-    model = nn.DataParallel(model)
+    # model = nn.DataParallel(model)
     model = model.cuda()
 
 if args.loadmodel is not None:
     state_dict = torch.load(args.loadmodel)
-    model.load_state_dict(state_dict['state_dict'])
+    state_dict = {".".join(k.split(".")[1:]): v for k,
+                  v in state_dict['state_dict'].items()}
+    model.load_state_dict(state_dict)
 
 print('Number of model parameters: {}'.format(
     sum([p.data.nelement() for p in model.parameters()])))
@@ -164,12 +167,12 @@ def main():
         adjust_learning_rate(optimizer, epoch)
 
         ## training ##
-        for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
+        for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(tqdm(TrainImgLoader)):
             start_time = time.time()
 
             loss = train(imgL_crop, imgR_crop, disp_crop_L)
-            print('Iter %d training loss = %.3f , time = %.2f' %
-                  (batch_idx, loss, time.time() - start_time))
+            # print('Iter %d training loss = %.3f , time = %.2f' %
+            #       (batch_idx, loss, time.time() - start_time))
             total_train_loss += loss
         print('epoch %d total training loss = %.3f' %
               (epoch, total_train_loss/len(TrainImgLoader)))
