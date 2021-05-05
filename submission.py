@@ -36,13 +36,15 @@ if args.cuda:
 
 if args.KITTI == '2015':
    from dataloader import KITTI_submission_loader as DA
+elif args.KITTI == 'triout':
+    from dataloader import TriOutSubmissionLoader as DA
 else:
    from dataloader import KITTI_submission_loader2012 as DA  
 
 test_left_img, test_right_img = DA.dataloader(args.datapath)
 
 if args.model == 'stackhourglass':
-    model = stackhourglass(args.maxdisp)
+    model = stackhourglass(int(args.maxdisp))
 elif args.model == 'basic':
     model = basic(args.maxdisp)
 else:
@@ -72,8 +74,9 @@ def test(imgL,imgR):
 def main():
     normal_mean_var = {'mean': [0.485, 0.456, 0.406],
                         'std': [0.229, 0.224, 0.225]}
-    infer_transform = transforms.Compose([transforms.ToTensor(),
-                                            transforms.Normalize(**normal_mean_var)])    
+    infer_transform = transforms.Compose([transforms.ToTensor()
+        #, transforms.Normalize(**normal_mean_var)
+        ])    
 
     for inx in range(len(test_left_img)):
 
@@ -82,6 +85,18 @@ def main():
 
         imgL = infer_transform(imgL_o)
         imgR = infer_transform(imgR_o)         
+
+        # # TODO: find a proper way to crop image
+        imgL = imgL[:, ::2, ::2]
+        imgR = imgR[:, ::2, ::2]
+
+        print(imgR.shape)
+        print(imgL)
+        print(imgR)
+
+        print('imgL.shape ', imgL.numpy().shape)
+        transforms.ToPILImage()(imgL).save(test_left_img[inx].split('/')[-1]+'.left.png')
+        transforms.ToPILImage()(imgR).save(test_left_img[inx].split('/')[-1]+'.right.png')
 
         # pad to width and hight to 16 times
         if imgL.shape[1] % 16 != 0:
@@ -96,21 +111,31 @@ def main():
         else:
             right_pad = 0    
 
+
         imgL = F.pad(imgL,(0,right_pad, top_pad,0)).unsqueeze(0)
         imgR = F.pad(imgR,(0,right_pad, top_pad,0)).unsqueeze(0)
 
+
         start_time = time.time()
         pred_disp = test(imgL,imgR)
+        print('pred_disp shape: ', pred_disp.shape)
         print('time = %.2f' %(time.time() - start_time))
 
-        if top_pad !=0 or right_pad != 0:
+        if right_pad != 0:
             img = pred_disp[top_pad:,:-right_pad]
+        elif top_pad !=0:
+            img = pred_disp[top_pad:,:]
         else:
             img = pred_disp
 
+        print('img shape: ', img.shape)
         img = (img*256).astype('uint16')
+        print(img)
+        print('img shape: ', img.shape)
         img = Image.fromarray(img)
-        img.save(test_left_img[inx].split('/')[-1])
+        print('img: ', img)
+        print('path: ', test_left_img[inx].split('/')[-1])
+        img.convert('L').save(test_left_img[inx].split('/')[-1])
 
 
 if __name__ == '__main__':
