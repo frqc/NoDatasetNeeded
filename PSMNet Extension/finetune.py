@@ -77,6 +77,16 @@ if args.loadmodel is not None:
     state_dict = torch.load(args.loadmodel)
     model.load_state_dict(state_dict['state_dict'])
 
+for i, child in enumerate(model.children()):
+  if i == 0:
+      for j, childchild in enumerate(child.children()):
+        if j == 0:
+          for k, childchildchild in enumerate(childchild.children()):
+            if k >= 5 and k <= 7:
+              for param in childchildchild.parameters():
+                param.requires_grad = False
+              print(childchildchild)
+              
 print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
 optimizer = optim.Adam(model.parameters(), lr=0.1, betas=(0.9, 0.999))
@@ -161,7 +171,7 @@ def main():
             start_time = time.time()
 
             loss = train(imgL_crop,imgR_crop, disp_crop_L)
-            print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
+            #print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
             total_train_loss += loss
         print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
 
@@ -169,7 +179,7 @@ def main():
 
         for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
             test_loss = test(imgL,imgR, disp_L)
-            print('Iter %d 3-px error in val = %.3f' %(batch_idx, test_loss*100))
+            #print('Iter %d 3-px error in val = %.3f' %(batch_idx, test_loss*100))
             total_test_loss += test_loss
 
 
