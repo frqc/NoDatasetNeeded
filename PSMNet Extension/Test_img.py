@@ -10,21 +10,16 @@ import numpy as np
 import time
 import math
 from models import *
-import cv2
 from PIL import Image
 
 # 2012 data /media/jiaren/ImageNet/data_scene_flow_2012/testing/
 
 parser = argparse.ArgumentParser(description='PSMNet')
-parser.add_argument('--KITTI', default='2015',
-                    help='KITTI version')
-parser.add_argument('--datapath', default='/media/jiaren/ImageNet/data_scene_flow_2015/testing/',
-                    help='select model')
-parser.add_argument('--loadmodel', default='./trained/pretrained_model_KITTI2015.tar',
+parser.add_argument('--loadmodel', default='./trained/finetune_8.tar',
                     help='loading model')
-parser.add_argument('--leftimg', default='./VO04_L.png',
+parser.add_argument('--leftimg', default='/home/tim/script/carla_script/_six_out/left_1/0cpci-00000272.png',
                     help='load model')
-parser.add_argument('--rightimg', default='./VO04_R.png',
+parser.add_argument('--rightimg', default='/home/tim/script/carla_script/_six_out/right_cam/0cpci-00000272.png',
                     help='load model')
 parser.add_argument('--model', default='stackhourglass',
                     help='select model')
@@ -48,7 +43,6 @@ elif args.model == 'basic':
 else:
     print('no model')
 
-model = nn.DataParallel(model, device_ids=[0])
 model.cuda()
 
 if args.loadmodel is not None:
