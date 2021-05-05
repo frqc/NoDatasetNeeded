@@ -108,13 +108,13 @@ def train(imgL, imgR, disp_L):
         output1 = torch.squeeze(output1, 1)
         output2 = torch.squeeze(output2, 1)
         output3 = torch.squeeze(output3, 1)
-        loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], size_average=True) + 0.7*F.smooth_l1_loss(
-            output2[mask], disp_true[mask], size_average=True) + F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True)
+        loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], reduction='mean') + 0.7*F.smooth_l1_loss(
+            output2[mask], disp_true[mask], reduction='mean') + F.smooth_l1_loss(output3[mask], disp_true[mask], reduction='mean')
     elif args.model == 'basic':
         output = model(imgL, imgR)
         output = torch.squeeze(output3, 1)
         loss = F.smooth_l1_loss(
-            output3[mask], disp_true[mask], size_average=True)
+            output3[mask], disp_true[mask], reduction='mean')
 
     loss.backward()
     optimizer.step()
@@ -169,7 +169,6 @@ def main():
         ## training ##
         for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(tqdm(TrainImgLoader)):
             start_time = time.time()
-
             loss = train(imgL_crop, imgR_crop, disp_crop_L)
             # print('Iter %d training loss = %.3f , time = %.2f' %
             #       (batch_idx, loss, time.time() - start_time))
