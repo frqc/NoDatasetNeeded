@@ -76,19 +76,21 @@ def test(model, left_img, right_img, disp_true, device, scheduler=None):
 @click.option('-b', '--batch', default=1)
 @click.option('-e', '--epochs', default=1)
 @click.option('-l', '--left_index', default=1)
-@click.option('--maxdisp', default=192)
+@click.option('-r', '--lr', default=0.001)
+@click.option('--maxdisp', default=256)
 @click.option('--datatype', default='carla')
 @click.option('--loadmodel', default='./pretrained_model_KITTI2015.tar')
 @click.option('--savemodel', default=None)
 @click.option('--seed', default=1)
-def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel, seed):
+def main(gpu, batch, left_index, lr, maxdisp, datatype, epochs, loadmodel, savemodel, seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         dev = f'cuda:{gpu}'
     else:
         dev = 'cpu'
     device = torch.device(dev)
-    print(f'Device: {device}, Batch: {batch}, Left index: {left_index}')
+    print(
+        f'Device: {device}, Batch: {batch}, Left index: {left_index}, Learning rate:{lr}')
 
     if savemodel is None:
         savemodel = "./saved_model_" + str(left_index)
@@ -129,8 +131,7 @@ def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
 
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=0.1, betas=(0.9, 0.999))
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
     # [2] Training
