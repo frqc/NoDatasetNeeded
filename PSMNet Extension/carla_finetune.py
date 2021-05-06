@@ -1,8 +1,8 @@
+import os
 import click
 import argparse
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -44,7 +44,7 @@ def train(model, optimizer, left_img, right_img, disp_img, device):
     return loss.item()
 
 
-def test(model, left_img, right_img, disp_true, device):
+def test(model, left_img, right_img, disp_true, device, scheduler=None):
     model.eval()
     left_img = Variable(torch.FloatTensor(left_img)).to(device)
     right_img = Variable(torch.FloatTensor(right_img)).to(device)
@@ -63,7 +63,12 @@ def test(model, left_img, right_img, disp_true, device):
     total_pixels = correct.shape[0] * correct.shape[1] * \
         correct.shape[2] * correct.shape[3]
 
-    return 1 - float(total_correct / total_pixels)
+    error_rate = 1 - float(total_correct / total_pixels)
+
+    if scheduler is not None:
+        scheduler.step(error_rate)
+
+    return error_rate
 
 
 @click.command()
@@ -73,8 +78,8 @@ def test(model, left_img, right_img, disp_true, device):
 @click.option('-l', '--left_index', default=1)
 @click.option('--maxdisp', default=192)
 @click.option('--datatype', default='carla')
-@click.option('--loadmodel', default=None)
-@click.option('--savemodel', default='./')
+@click.option('--loadmodel', default='./pretrained_model_KITTI2015.tar')
+@click.option('--savemodel', default=None)
 @click.option('--seed', default=1)
 def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel, seed):
     torch.manual_seed(seed)
@@ -84,6 +89,11 @@ def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel
         dev = 'cpu'
     device = torch.device(dev)
     print(f'Device: {device}, Batch: {batch}, Left index: {left_index}')
+
+    if savemodel is None:
+        savemodel = "./saved_model_" + str(left_index)
+        if not os.path.exists(savemodel):
+            os.makedirs(savemodel)
 
     # [0] Load data
     if datatype == 'carla':
@@ -104,18 +114,24 @@ def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel
 
     # [1] Build model
     model = stackhourglass(maxdisp)
-    # if loadmodel is not None:
-    #     state_dict = torch.load(loadmodel)
-    #     state_dict = {".".join(k.split(".")[1:]): v for k,
-    #                   v in state_dict['state_dict'].items()}
-    #     model.load_state_dict(state_dict)
+    if loadmodel is not None:
+        if loadmodel[-8:] == '2015.tar':
+            state_dict = torch.load(loadmodel)
+            state_dict = {".".join(k.split(".")[1:]): v for k,
+                          v in state_dict['state_dict'].items()}
+            model.load_state_dict(state_dict)
+        else:
+            model.load_state_dict(state_dict['state_dict'])
+        print("loaded", loadmodel)
     model = model.to(device)
 
     # Todo: Add number of unfrozen parameters
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
 
-    optimizer = optim.Adam(model.parameters(), lr=0.1, betas=(0.9, 0.999))
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=0.1, betas=(0.9, 0.999))
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
     # [2] Training
     tuning_start_time = time.time()
@@ -133,7 +149,7 @@ def main(gpu, batch, left_index, maxdisp, datatype, epochs, loadmodel, savemodel
         ## Test ##
         total_test_loss = 0
         for _, (imgL, imgR, disp_L) in enumerate(tqdm(TestImgLoader)):
-            test_loss = test(model, imgL, imgR, disp_L, device)
+            test_loss = test(model, imgL, imgR, disp_L, device, scheduler)
             total_test_loss += test_loss
         total_test_loss /= len(TestImgLoader)
 
