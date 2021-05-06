@@ -77,15 +77,15 @@ if args.loadmodel is not None:
     state_dict = torch.load(args.loadmodel)
     model.load_state_dict(state_dict['state_dict'])
 
+###Modify here for freezing specifc layers
 for i, child in enumerate(model.children()):
   if i == 0:
       for j, childchild in enumerate(child.children()):
-        if j == 0:
+        if j == 1 or j == 2:
           for k, childchildchild in enumerate(childchild.children()):
-            if k >= 5 and k <= 7:
-              for param in childchildchild.parameters():
-                param.requires_grad = False
-              print(childchildchild)
+            for param in childchildchild.parameters():
+              param.requires_grad = False
+            print(childchildchild)
               
 print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
@@ -205,4 +205,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
