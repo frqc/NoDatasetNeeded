@@ -78,12 +78,10 @@ def get_transform(name='imagenet', input_size=None,
     normalize = __imagenet_stats
     input_size = 256
     if augment:
-            return inception_color_preproccess(input_size, normalize=normalize)
+        return inception_color_preproccess(input_size, normalize=normalize)
     else:
-            return scale_crop(input_size=input_size,
-                              scale_size=scale_size, normalize=normalize)
-
-
+        return scale_crop(input_size=input_size,
+                            scale_size=scale_size, normalize=normalize)
 
 
 class Lighting(object):
