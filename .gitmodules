@@ -1,0 +1,3 @@
+[submodule "data_generation"]
+	path = data_generation
+	url = git@github.com:frqc/data_generation.git
