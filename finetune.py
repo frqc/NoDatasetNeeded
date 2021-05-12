@@ -95,6 +95,7 @@ def train(imgL,imgR,disp_L):
 
         #---------
         mask = (disp_true > 0)
+        # print(disp_true)
         mask.detach_()
         #----
 

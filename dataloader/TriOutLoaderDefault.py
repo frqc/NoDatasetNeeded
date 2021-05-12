@@ -16,8 +16,8 @@ def is_image_file(filename):
 
 def dataloader(filepath):
 
-    left_fold  = 'left_cam/'
-    right_fold = 'right_cam/'
+    right_fold  = 'left_1/'
+    left_fold = 'right_cam/'
     disp_L = 'depth/'
     # disp_R = 'disp_occ_1/'
 

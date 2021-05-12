@@ -42,6 +42,12 @@ class myImageFloder(data.Dataset):
         right_img = self.loader(right)
         dataL = self.dploader(disp_L)
 
+        w, h = left_img.size
+        w, h = w//2, h//2
+        left_img = left_img.resize((w,h))
+        right_img = right_img.resize((w,h))
+        dataL = dataL.resize((w,h))
+
         if self.training:  
            w, h = left_img.size
            th, tw = 256, 512
@@ -52,8 +58,12 @@ class myImageFloder(data.Dataset):
            left_img = left_img.crop((x1, y1, x1 + tw, y1 + th))
            right_img = right_img.crop((x1, y1, x1 + tw, y1 + th))
 
-           dataL = np.ascontiguousarray(dataL,dtype=np.float32)/256
-           dataL = 1-dataL
+           dataL = np.ascontiguousarray(dataL,dtype=np.float32) # /256
+           dataL = dataL/256 # log(distance) 0-1.0
+           dataL = np.exp(1-dataL)*93 # exp
+           dataL[dataL<0] = 0
+           dataL[dataL>255]=255
+           print(dataL)
            dataL = dataL[y1:y1 + th, x1:x1 + tw]
 
            processed = preprocess.get_transform(augment=False)  

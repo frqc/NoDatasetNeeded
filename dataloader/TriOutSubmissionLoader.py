@@ -16,8 +16,8 @@ def is_image_file(filename):
 
 def dataloader(filepath):
 
-    left_fold  = 'right_cam/'
-    right_fold = 'left_cam/'
+    right_fold  = 'left_1/'
+    left_fold = 'right_cam/'
 
 
     image = [img for img in os.listdir(filepath+left_fold) if img.find('.png') > -1]
