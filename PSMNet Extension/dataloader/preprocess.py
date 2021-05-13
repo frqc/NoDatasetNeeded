@@ -3,9 +3,9 @@ import torchvision.transforms as transforms
 import random
 
 __imagenet_stats = {'mean': [0.485, 0.456, 0.406],
-                   'std': [0.229, 0.224, 0.225]}
+                    'std': [0.229, 0.224, 0.225]}
 
-#__imagenet_stats = {'mean': [0.5, 0.5, 0.5],
+# __imagenet_stats = {'mean': [0.5, 0.5, 0.5],
 #                   'std': [0.5, 0.5, 0.5]}
 
 __imagenet_pca = {
@@ -23,7 +23,7 @@ def scale_crop(input_size, scale_size=None, normalize=__imagenet_stats):
         transforms.ToTensor(),
         transforms.Normalize(**normalize),
     ]
-    #if scale_size != input_size:
+    # if scale_size != input_size:
     #t_list = [transforms.Scale((960,540))] + t_list
 
     return transforms.Compose(t_list)
@@ -58,10 +58,12 @@ def inception_preproccess(input_size, normalize=__imagenet_stats):
         transforms.ToTensor(),
         transforms.Normalize(**normalize)
     ])
+
+
 def inception_color_preproccess(input_size, normalize=__imagenet_stats):
     return transforms.Compose([
-        #transforms.RandomSizedCrop(input_size),
-        #transforms.RandomHorizontalFlip(),
+        # transforms.RandomSizedCrop(input_size),
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         ColorJitter(
             brightness=0.4,
@@ -81,7 +83,7 @@ def get_transform(name='imagenet', input_size=None,
         return inception_color_preproccess(input_size, normalize=normalize)
     else:
         return scale_crop(input_size=input_size,
-                            scale_size=scale_size, normalize=normalize)
+                          scale_size=scale_size, normalize=normalize)
 
 
 class Lighting(object):
